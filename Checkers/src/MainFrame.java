@@ -15,7 +15,8 @@ public class MainFrame extends JComponent implements MouseListener,
 	int array[][] = new int[10][10];
 
 	MainFrame() {
-		y=550;
+		x=7;
+		y=547;
 		addMouseListener(this);
 		addMouseMotionListener(this);
 	}
@@ -43,7 +44,7 @@ public class MainFrame extends JComponent implements MouseListener,
 	public void mouseClicked(MouseEvent e) {
 		int tX = (e.getX() / size) * size;
 		int tY = (e.getY() / size) * size;
-		if(tY>y)return;
+		if(tY==y-7)return;
 		if ((tX / size) % 2 == 0 && (tY / size) % 2 == 0) {
 			return;
 		}
