@@ -11,21 +11,43 @@ import javax.swing.*;
 public class MainFrame extends JComponent implements MouseListener,
 		MouseMotionListener {
 	private int size = 60;
+	private boolean picked = false;
 	private int x, y;
-	int array[][] = new int[10][10];
+	private int px, py;
+	Figure map[][] = new Figure[8][8];
 
 	MainFrame() {
-		x=7;
-		y=547;
+		for (int b = 0; b < 8; b += 2) {
+			map[b + 1][0] = new Figure("black");
+			map[b][1] = new Figure("black");
+			map[b + 1][2] = new Figure("black");
+		}
+		for (int b = 7; b > 0; b -= 2) {
+			map[b - 1][5] = new Figure("white");
+			map[b][6] = new Figure("white");
+			map[b - 1][7] = new Figure("white");
+		}
 		addMouseListener(this);
 		addMouseMotionListener(this);
+	}
+
+	class Figure {
+		private String color;
+
+		Figure(String color) {
+			this.color = color;
+		}
+
+		String getColor() {
+			return color;
+		}
 	}
 
 	public void paint(Graphics g) {
 		Graphics2D g2 = (Graphics2D) g;
 		boolean black = true;
-		for (int b = 0; b < 10; b++)
-			for (int a = 0; a < 11; a++) {
+		for (int b = 0; b < 8; b++)
+			for (int a = 0; a < 9; a++) {
 				if (black) {
 					black = false;
 					g2.setColor(Color.GRAY);
@@ -35,25 +57,80 @@ public class MainFrame extends JComponent implements MouseListener,
 				}
 				g2.fill(new Rectangle2D.Double(a * size, b * size, size, size));
 			}
-		g2.setColor(Color.WHITE);
-		g2.fill(new RoundRectangle2D.Double(x, y, size - 15, size - 15,
-				size - 15, size - 15));
+		for (int a = 0; a < map.length; a++)
+			for (int b = 0; b < map[0].length; b++) {
+				if (map[a][b] != null) {
+					if (map[a][b].getColor().equals("black"))
+						g2.setColor(Color.LIGHT_GRAY);
+					else
+						g2.setColor(Color.WHITE);
+					g2.fill(new RoundRectangle2D.Double(a * 60 + 7, b * 60 + 7,
+							size - 15, size - 15, size - 15, size - 15));
+				}
+			}
+		if (picked) {
+			g2.setColor(new Color(96, 96, 224));
+			g2.fill(new RoundRectangle2D.Double(px * size + 7, py * size + 7,
+					size - 15, size - 15, size - 15, size - 15));
+		}
 	}
 
-	@Override
+	int distance() {
+		double a = Math.pow((px - x), 2);
+		double b = Math.pow((py - y), 2);
+		if (a > b)
+			return (int) Math.sqrt(a);
+		else
+			return (int) Math.sqrt(b);
+	}
+
+	boolean onDiagonal() {
+		// duct tape
+		int distance = distance();
+		if (px + distance == x && py + distance == y)
+			return true;
+		if (px - distance == x && py - distance == y)
+			return true;
+		if (px + distance == x && py - distance == y)
+			return true;
+		if (px - distance == x && py + distance == y)
+			return true;
+		return false;
+	}
+
+	boolean isAdversary() {
+//		int distance=distance();
+//		if(px-distance)
+		return false;
+	}
+
 	public void mouseClicked(MouseEvent e) {
-		int tX = (e.getX() / size) * size;
-		int tY = (e.getY() / size) * size;
-		if(tY==y-7)return;
-		if ((tX / size) % 2 == 0 && (tY / size) % 2 == 0) {
+		int tX = e.getX() / size;
+		int tY = e.getY() / size;
+		if (picked) {
+			// if (distance() > 1)
+			// return;
+			if (!onDiagonal())
+				return;
+			if (map[tX][tY] == map[x][y]) {
+				picked = false;
+				repaint();
+				return;
+			}
+			if (map[px][py] != null)
+				return;
+			map[px][py] = map[x][y];
+			map[x][y] = null;
+			picked = false;
+			repaint();
 			return;
 		}
-		if ((tX / size) % 2 != 0 && (tY / size) % 2 != 0) {
-			return;
+		if (map[tX][tY] != null) {
+			System.out.println(tX + " " + tY);
+			x = tX;
+			y = tY;
+			picked = true;
 		}
-		x = tX + 7;
-		y = tY + 7;
-		repaint();
 	}
 
 	@Override
@@ -86,7 +163,7 @@ public class MainFrame extends JComponent implements MouseListener,
 			public void run() {
 				JFrame frame = new JFrame("Checkers");
 				frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-				frame.setSize(605, 650);
+				frame.setSize(485, 530);
 				frame.setResizable(false);
 				frame.setLocationRelativeTo(null);
 				JComponent c = new MainFrame();
@@ -111,17 +188,14 @@ public class MainFrame extends JComponent implements MouseListener,
 
 	@Override
 	public void mouseMoved(MouseEvent e) {
-//		int tX = (e.getX() / size) * size;
-//		int tY = (e.getY() / size) * size;
-//		if ((tX / size) % 2 == 0 && (tY / size) % 2 == 0) {
-//			return;
-//		}
-//		if ((tX / size) % 2 != 0 && (tY / size) % 2 != 0) {
-//			return;
-//		}
-//		x = tX + 7;
-//		y = tY + 7;
-//		repaint();
-
+		if (!picked)
+			return;
+		int tX = e.getX() / size;
+		int tY = e.getY() / size;
+		px = tX;
+		py = tY;
+		if (!onDiagonal())
+			return;
+		repaint();
 	}
 }
